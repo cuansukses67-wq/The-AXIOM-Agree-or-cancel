@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="Axiom-Coin-Logo-transparent.png">
+<title>THE AXIOM — Agree or Cancel</title>
+<style>
+  
+
+  :root{
+    --ink:#0e1712;
+    --paper:#f3efe4;
+    --brass:#b98a3d;
+    --brass-bright:#d8a856;
+    --line: rgba(243,239,228,0.14);
+    --muted: rgba(243,239,228,0.62);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  html,body{
+    height:100%;
+    background: var(--ink);
+    color: var(--paper);
+    font-family:'Inter', sans-serif;
+    overflow:hidden;
+  }
+
+  .book{
+    position:relative;
+    height:100vh;
+    width:100vw;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .page{
+    position:absolute;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    padding: 8vh 10vw;
+    opacity:0;
+    transition: opacity .5s ease;
+  }
+  .page.active{
+    display:flex;
+    opacity:1;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    font-size:.72rem;
+    color:var(--brass-bright);
+    margin-bottom:1.4rem;
+  }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: clamp(2.4rem, 6vw, 4.8rem);
+    line-height:1.02;
+    letter-spacing:-0.01em;
+  }
+  h2{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: clamp(1.7rem, 3.4vw, 2.6rem);
+    margin-bottom:1.6rem;
+    max-width: 22ch;
+  }
+  p, li{
+    font-size: clamp(0.95rem, 1.15vw, 1.15rem);
+    line-height:1.7;
+    color: var(--muted);
+    max-width: 58ch;
+  }
+  strong{ color: var(--paper); font-weight:600; }
+
+  .quote{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size: clamp(1.2rem, 2vw, 1.7rem);
+    color: var(--paper);
+    max-width: 42ch;
+    border-left: 2px solid var(--brass);
+    padding-left: 1.4rem;
+    margin-top: 1.4rem;
+  }
+
+  .cols{
+    display:flex;
+    gap: 3rem;
+    margin-top: 1.6rem;
+    flex-wrap:wrap;
+  }
+  .cols > div{ max-width: 26ch; }
+  .cols .num{
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--brass-bright);
+    font-size:.85rem;
+    margin-bottom:.4rem;
+  }
+  .cols h3{
+    font-family:'Fraunces', serif;
+    font-size:1.15rem;
+    margin-bottom:.5rem;
+    color: var(--paper);
+  }
+
+  ol.flow{ counter-reset: step; margin-top:1rem; }
+  ol.flow li{
+    list-style:none;
+    position:relative;
+    padding-left: 2.6rem;
+    margin-bottom: 1.1rem;
+    max-width: 54ch;
+  }
+  ol.flow li::before{
+    counter-increment: step;
+    content: counter(step);
+    position:absolute; left:0; top:0;
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--ink);
+    background: var(--brass-bright);
+    width: 1.7rem; height:1.7rem;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:.8rem;
+  }
+
+  table.spec{
+    margin-top:1.2rem;
+    border-collapse:collapse;
+    width:100%;
+    max-width: 62ch;
+  }
+  table.spec th, table.spec td{
+    text-align:left;
+    padding: .65rem .9rem;
+    border-bottom:1px solid var(--line);
+    font-size:.95rem;
+  }
+  table.spec th{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.72rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color: var(--brass-bright);
+    font-weight:500;
+  }
+  table.spec td:first-child{ color:var(--paper); font-weight:500; }
+  table.spec td{ color: var(--muted); }
+
+  /* --- Seal signature element --- */
+  .seal{
+    width: 92px; height:92px;
+    border-radius:50%;
+    border: 1.5px solid var(--brass);
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    margin-bottom: 2rem;
+  }
+  .seal::before{
+    content:'';
+    position:absolute; inset:6px;
+    border:1px solid var(--brass);
+    border-radius:50%;
+    opacity:.5;
+  }
+  .seal span{
+    font-family:'Fraunces', serif;
+    font-size:2rem;
+    color: var(--brass-bright);
+  }
+
+  /* --- Nav controls --- */
+  .nav{
+    position:fixed;
+    bottom: 4vh;
+    left:0; right:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 1.4rem;
+    z-index:10;
+  }
+  .nav button{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.78rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    background: transparent;
+    color: var(--paper);
+    border: 1px solid var(--line);
+    padding: .7rem 1.5rem;
+    border-radius: 999px;
+    cursor:pointer;
+    transition: all .2s ease;
+  }
+  .nav button:hover{ border-color: var(--brass); color: var(--brass-bright); }
+  .nav button:disabled{ opacity:.3; cursor:default; }
+  .nav button:disabled:hover{ border-color: var(--line); color: var(--paper); }
+
+  .dots{
+    display:flex; gap:.5rem;
+  }
+  .dots span{
+    width:6px; height:6px; border-radius:50%;
+    background: var(--line);
+    transition: background .2s ease, transform .2s ease;
+  }
+  .dots span.on{ background: var(--brass-bright); transform: scale(1.3); }
+
+  .pageno{
+    position:fixed;
+    top: 4vh; right: 5vw;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.75rem;
+    color: var(--muted);
+    letter-spacing:.05em;
+  }
+
+  footer.brand{
+    position:fixed;
+    top:4vh; left:5vw;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.72rem;
+    letter-spacing:.1em;
+    color: var(--muted);
+    text-transform:uppercase;
+  }
+
+  @media (max-width: 720px){
+    .page{ padding: 6vh 7vw; }
+    .cols{ gap:1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<footer class="brand">The Axiom · Explanation</footer>
+<div class="pageno"><span id="pageNo">01</span> / <span id="pageTotal">09</span></div>
+
+<div class="book" id="book">
+
+  <section class="page active">
+    <div class="seal"><span>A</span></div>
+    <h1>THE AXIOM</h1>
+    <p style="margin-top:1.2rem; font-size:1.2rem; color:var(--paper);">Agree or Cancel.</p>
+    <p style="margin-top:.8rem;">Sistem keuangan digital terdesentralisasi dengan mekanisme persetujuan bersama — tidak ada transaksi yang batal secara sepihak.</p>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">01 — Abstrak</div>
+    <h2>Rasa aman baru dalam transaksi crypto</h2>
+    <p>The Axiom adalah protokol keuangan digital terdesentralisasi. Berbeda dari sistem blockchain konvensional yang <strong>irreversible</strong>, atau sistem terpusat yang membiarkan satu pihak membatalkan transaksi seenaknya, The Axiom memperkenalkan <strong>Mutual Consent Layer (MCL)</strong>.</p>
+    <div class="quote">Pembatalan transaksi hanya sah jika kedua belah pihak menyetujuinya.</div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">02 — Latar Belakang</div>
+    <h2>Dua ekstrem yang belum terjembatani</h2>
+    <div class="cols">
+      <div>
+        <div class="num">01</div>
+        <h3>Sistem terpusat</h3>
+        <p>Transaksi bisa dibatalkan, tapi kendalinya di tangan bank/admin — rawan penyalahgunaan wewenang.</p>
+      </div>
+      <div>
+        <div class="num">02</div>
+        <h3>Blockchain klasik</h3>
+        <p>Cepat &amp; desentralisasi, tapi begitu terkonfirmasi tidak bisa dibatalkan sama sekali.</p>
+      </div>
+    </div>
+    <p style="margin-top:1.6rem;">The Axiom adalah jalan tengahnya: desentralisasi penuh, tapi tetap ada ruang aman untuk membatalkan — asal kedua pihak setuju.</p>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">03 — Prinsip Dasar</div>
+    <h2>Tiga prinsip inti</h2>
+    <div class="cols">
+      <div><h3>Desentralisasi</h3><p>Tidak ada otoritas tunggal yang mengendalikan dana.</p></div>
+      <div><h3>Perlindungan Bersama</h3><p>Dana dilindungi dari kesalahan maupun manipulasi sepihak.</p></div>
+      <div><h3>Consensus to Cancel</h3><p>Pembatalan lahir dari kesepakatan, bukan hak sepihak.</p></div>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">04 — Alur Transaksi</div>
+    <h2>Bagaimana sistem bekerja</h2>
+    <ol class="flow">
+      <li>Pengirim (A) membuat transaksi ke Penerima (B).</li>
+      <li>Dana dikunci sementara di <strong>Smart Escrow Contract</strong>.</li>
+      <li>Sistem menunggu <strong>Mutual Confirmation Window</strong>.</li>
+      <li>Tanpa permintaan pembatalan dari kedua pihak, transaksi otomatis final.</li>
+    </ol>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">05 — Agree or Cancel</div>
+    <h2>Alur pembatalan transaksi</h2>
+    <ol class="flow">
+      <li>Salah satu pihak mengajukan permintaan pembatalan.</li>
+      <li>Sistem meminta persetujuan dari pihak lainnya.</li>
+      <li><strong>Kedua pihak setuju</strong> → dana rollback ke posisi awal.</li>
+      <li><strong>Hanya satu pihak setuju / tanpa respons</strong> → transaksi tetap lanjut sesuai jadwal.</li>
+    </ol>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">06 — Komponen Teknis</div>
+    <h2>Empat lapisan protokol</h2>
+    <table class="spec">
+      <tr><th>Komponen</th><th>Fungsi</th></tr>
+      <tr><td>Smart Escrow Contract</td><td>Menahan dana sementara sebelum final</td></tr>
+      <tr><td>Mutual Consent Layer</td><td>Mengelola logika persetujuan dua arah</td></tr>
+      <tr><td>Confirmation Window</td><td>Jendela waktu untuk mengajukan pembatalan</td></tr>
+      <tr><td>Dispute Fallback</td><td>Cadangan jika salah satu pihak tidak merespons</td></tr>
+    </table>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">07 — Keamanan &amp; Kasus Penggunaan</div>
+    <h2>Perlindungan tanpa perantara</h2>
+    <div class="cols">
+      <div><h3>Anti Sepihak</h3><p>Mencegah penipuan saat satu pihak membatalkan setelah menerima barang/jasa.</p></div>
+      <div><h3>Transparansi Penuh</h3><p>Status transaksi tercatat &amp; dapat diverifikasi di jaringan.</p></div>
+      <div><h3>Timeout Protection</h3><p>Transaksi tidak menggantung selamanya jika satu pihak diam.</p></div>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">08 — Penutup</div>
+    <h2>Bukan sekadar coin baru</h2>
+    <p>The Axiom adalah prinsip baru dalam transaksi digital: kebebasan penuh dari desentralisasi, tanpa kehilangan rasa aman dari kemungkinan kesalahan manusiawi.</p>
+    <div class="quote">Agree or Cancel — bukan sepihak, bukan lewat perantara, tapi lewat kesepakatan.</div>
+  </section>
+
+</div>
+
+<div class="nav">
+  <button id="prevBtn" onclick="go(-1)">← Kembali</button>
+  <div class="dots" id="dots"></div>
+  <button id="nextBtn" onclick="go(1)">Lanjut →</button>
+</div>
+
+<script>
+  const pages = document.querySelectorAll('.page');
+  const total = pages.length;
+  let current = 0;
+
+  const dotsWrap = document.getElementById('dots');
+  pages.forEach((_, i) => {
+    const d = document.createElement('span');
+    if(i === 0) d.classList.add('on');
+    dotsWrap.appendChild(d);
+  });
+  document.getElementById('pageTotal').textContent = String(total).padStart(2,'0');
+
+  function render(){
+    pages.forEach((p, i) => p.classList.toggle('active', i === current));
+    [...dotsWrap.children].forEach((d, i) => d.classList.toggle('on', i === current));
+    document.getElementById('pageNo').textContent = String(current+1).padStart(2,'0');
+    document.getElementById('prevBtn').disabled = current === 0;
+    document.getElementById('nextBtn').disabled = current === total-1;
+    document.getElementById('nextBtn').textContent = current === total-1 ? 'Selesai' : 'Lanjut →';
+  }
+
+  function go(dir){
+    const n = current + dir;
+    if(n < 0 || n >= total) return;
+    current = n;
+    render();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'ArrowRight') go(1);
+    if(e.key === 'ArrowLeft') go(-1);
+  });
+
+  render();
+</script>
+
+</body>
+</html>
